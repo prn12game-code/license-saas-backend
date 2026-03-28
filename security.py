@@ -1,9 +1,20 @@
+from passlib.context import CryptContext
 import os
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
 
 load_dotenv()
 
+# ===== PASSWORD HASH =====
+pwd_context = CryptContext(schemes=["bcrypt"])
+
+def hash_password(password):
+    return pwd_context.hash(password)
+
+def verify_password(password, hashed):
+    return pwd_context.verify(password, hashed)
+
+# ===== ENCRYPT SMTP =====
 FERNET_KEY = os.getenv("FERNET_KEY")
 
 if not FERNET_KEY:
