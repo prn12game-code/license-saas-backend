@@ -1,12 +1,17 @@
 import os
+from auth import generate_token
 from dotenv import load_dotenv
 from fastapi import Header
 from auth import verify_token
+from pydantic import BaseModel
+from fastapi.responses import HTMLResponse
+from fastapi import Form
 load_dotenv()
 
 ADMIN_SECRET = os.getenv("ADMIN_SECRET")
 JWT_SECRET = os.getenv("JWT_SECRET")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
@@ -16,11 +21,23 @@ from security import hash_password, verify_password, encrypt, decrypt
 from auth import create_token
 from email_utils import send_email
 from license_utils import generate_code
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi import Request
 
+templates = Jinja2Templates(directory="templates")
 
-app = FastAPI()
+app = FastAPI(docs_url=None, redoc_url=None)
 
 Base.metadata.create_all(bind=engine)
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 
 # DB dependency
@@ -75,8 +92,10 @@ def activate(code: str, user_email: str, device_id: str, db: Session = Depends(g
     lic = db.query(License).filter(License.code == code).first()
     if lic.device_id and lic.device_id != device_id:
         return {"error": "license already used on another device"}
-    if not lic or lic.is_used == "yes":
-        return {"error": "invalid code"}
+
+    # lần đầu
+    if not lic.device_id:
+        lic.device_id = device_id
 
     user = db.query(User).filter(User.email == user_email).first()
 
@@ -95,23 +114,101 @@ def activate(code: str, user_email: str, device_id: str, db: Session = Depends(g
 
     return {"msg": "activated"}
 
+    ip = request.client.host
+
+    if lic.device_id and lic.device_id != device_id:
+        return {"error": "device mismatch"}
+
+    if hasattr(lic, "ip") and lic.ip and lic.ip != ip:
+        return {"error": "ip mismatch"}
+
+    lic.device_id = device_id
+    lic.ip = ip
+
 # Register
 @app.post("/register")
-def register(email: str, password: str, db: Session = Depends(get_db)):
-    user = User(email=email, password=hash_password(password))
+def register(
+    email: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    existing = db.query(User).filter(User.email == email).first()
+    if existing:
+        return {"error": "email already exists"}
+
+    token = generate_token()
+
+    user = User(
+        email=email,
+        password=hash_password(password),
+        verify_token=token,
+        is_verified="no"
+    )
+
     db.add(user)
     db.commit()
-    return {"msg": "created"}
 
+    # gửi email xác nhận
+    verify_link = f"http://127.0.0.1:8000/verify?token={token}"
+
+    send_email(
+        ADMIN_EMAIL,
+        EMAIL_PASSWORD,
+        email,
+        "Verify your account",
+        f"Click to verify: {verify_link}"
+    )
+
+    return {"msg": "check your email to verify account"}
+
+@app.get("/register", response_class=HTMLResponse)
+def register_page():
+    return """
+    <html>
+        <body>
+            <h2>Register</h2>
+            <form action="/register" method="post">
+                <input name="email" placeholder="Email"><br>
+                <input name="password" type="password" placeholder="Password"><br>
+                <button type="submit">Register</button>
+            </form>
+        </body>
+    </html>
+    """
+
+@app.get("/login", response_class=HTMLResponse)
+def login_page():
+    return """
+    <html>
+        <body>
+            <h2>Login</h2>
+            <form action="/login" method="post">
+                <input name="email" placeholder="Email"><br>
+                <input name="password" type="password" placeholder="Password"><br>
+                <button type="submit">Login</button>
+            </form>
+        </body>
+    </html>
+    """
 # Login
 @app.post("/login")
-def login(email: str, password: str, db: Session = Depends(get_db)):
+def login(
+    email: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
     user = db.query(User).filter(User.email == email).first()
+
     if not user or not verify_password(password, user.password):
         return {"error": "invalid"}
 
+    
+    if user.is_verified != "yes":
+        return {"error": "please verify your email first"}
+
     token = create_token({"email": email})
     return {"token": token}
+
 
 # Save SMTP
 @app.post("/smtp")
@@ -139,17 +236,20 @@ def create_invoice(
 ):
     user = current_user
 
-    if not user:
-        return {"error": "user not found"}
+    # ✅ FIX ĐẶT Ở ĐÂY
+    if not user.smtp_email or not user.smtp_password:
+        return {"error": "smtp not set"}
 
     invoice = Invoice(
         customer_name=customer_name,
         customer_email=customer_email,
-        total=total
+        total=total,
+        user_id=user.id   # ⚠️ nhớ thêm dòng này
     )
 
     db.add(invoice)
     db.commit()
+
 
     # ===== EMAIL =====
     smtp_pass = decrypt(user.smtp_password)
@@ -236,5 +336,132 @@ def revoke(code: str, admin_secret: str, db: Session = Depends(get_db)):
 def list_licenses(admin_secret: str, db: Session = Depends(get_db)):
     if admin_secret != ADMIN_SECRET:
         raise HTTPException(status_code=403)
+
+    return db.query(License).all()
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+
+@app.get("/login", response_class=HTMLResponse)
+def login_page():
+    return """
+    <html>
+        <body>
+            <h2>Login</h2>
+            <form action="/login" method="post">
+                <input name="email" placeholder="Email"><br>
+                <input name="password" type="password" placeholder="Password"><br>
+                <button type="submit">Login</button>
+            </form>
+        </body>
+    </html>
+    """
+
+@app.get("/", response_class=HTMLResponse)
+def home():
+    return """
+    <html>
+        <body>
+            <h1>Invoice SaaS</h1>
+            <a href="/login">Login</a><br>
+            <a href="/register">Register</a>
+        </body>
+    </html>
+    """
+
+@app.get("/login", response_class=HTMLResponse)
+def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
+@app.get("/register", response_class=HTMLResponse)
+def register_page(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
+
+@app.get("/verify")
+def verify(token: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.verify_token == token).first()
+
+    if not user:
+        return {"error": "invalid token"}
+
+    user.is_verified = "yes"
+    user.verify_token = None
+    db.commit()
+
+    return {"msg": "account verified"}
+
+@app.post("/forgot-password")
+def forgot_password(email: str = Form(...), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == email).first()
+
+    if not user:
+        return {"error": "email not found"}
+
+    token = generate_token()
+    user.reset_token = token
+    db.commit()
+
+    link = f"http://127.0.0.1:8000/reset-password?token={token}"
+
+    send_email(
+        ADMIN_EMAIL,
+        EMAIL_PASSWORD,
+        email,
+        "Reset password",
+        f"Click here: {link}"
+    )
+
+    return {"msg": "check your email"}
+
+@app.post("/change-password")
+def change_password(
+    old_password: str = Form(...),
+    new_password: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not verify_password(old_password, current_user.password):
+        return {"error": "wrong password"}
+
+    current_user.password = hash_password(new_password)
+    db.commit()
+
+    return {"msg": "changed"}
+
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    invoices = db.query(Invoice).filter(Invoice.user_id == current_user.id).all()
+
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "invoices": invoices
+    })
+
+@app.get("/admin/users")
+def get_users(admin_secret: str, db: Session = Depends(get_db)):
+    if admin_secret != ADMIN_SECRET:
+        return {"error": "unauthorized"}
+
+    return db.query(User).all()
+
+@app.get("/admin/invoices")
+def get_all_invoices(admin_secret: str, db: Session = Depends(get_db)):
+    if admin_secret != ADMIN_SECRET:
+        return {"error": "unauthorized"}
+
+    return db.query(Invoice).all()
+
+@app.get("/my-license")
+def my_license(current_user: User = Depends(get_current_user)):
+    return {
+        "license": current_user.license_expiry
+    }
+
+@app.get("/admin/licenses")
+def all_licenses(admin_secret: str, db: Session = Depends(get_db)):
+    if admin_secret != ADMIN_SECRET:
+        return {"error": "unauthorized"}
 
     return db.query(License).all()

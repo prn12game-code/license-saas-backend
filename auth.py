@@ -2,11 +2,17 @@ from jose import jwt
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
+import secrets
 
 load_dotenv()
 
 SECRET = os.getenv("JWT_SECRET")
 ALGO = "HS256"
+
+
+def generate_token():
+    return secrets.token_urlsafe(32)
+
 
 def create_token(data):
     payload = data.copy()
