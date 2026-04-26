@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  licensehub:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist the SQLite database across container restarts
+      - ./data:/app/data
+    env_file:
+      - .env
+    restart: unless-stopped

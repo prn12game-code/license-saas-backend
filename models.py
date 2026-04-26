@@ -10,24 +10,30 @@ class User(Base):
 
     is_verified = Column(String, default="no")
     verify_token = Column(String)
-    reset_token = Column(String)                 
+    reset_token = Column(String)
 
     smtp_email = Column(String)
     smtp_password = Column(String)
     license_expiry = Column(String)
     smtp_mode = Column(String, default="always")
-    
     email_template = Column(String)
 
+    # Webhook — called automatically when invoice is marked paid
+    webhook_url = Column(String, nullable=True)
+    webhook_secret = Column(String, nullable=True)  # used to sign payloads (HMAC-SHA256)
+
+
 class Invoice(Base):
-    ip = Column(String)
     __tablename__ = "invoices"
-    user_id = Column(Integer)
     id = Column(Integer, primary_key=True)
+    user_id = Column(Integer)
     customer_name = Column(String)
     customer_email = Column(String)
     total = Column(Float)
     status = Column(String, default="pending")
+    currency = Column(String, default="USD")
+    ip = Column(String)
+
 
 class License(Base):
     __tablename__ = "licenses"
