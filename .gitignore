@@ -1,4 +1,29 @@
+# ── Secrets (NEVER upload these) ──────────────────────────
 .env
+data.db
+*.db
+
+# ── Python auto-generated (not needed) ────────────────────
 __pycache__/
 *.pyc
-data.db
+*.pyo
+*.pyd
+.Python
+
+# ── Virtual environment (buyers install their own) ────────
+venv/
+env/
+.venv/
+
+# ── Token system private tools (keep these only on YOUR machine) ─
+token_generator_private.py
+token_packages_private.json
+admin_tools/
+
+# ── OS files ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Editor files ──────────────────────────────────────────
+.vscode/settings.json
+*.swp
