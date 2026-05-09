@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in — LicenseHub</title>
+<link rel="stylesheet" href="/static/css/auth.css">
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">
+    <div class="lm">
+      <svg viewBox="0 0 16 16"><path d="M8 1L2 4v4c0 3.3 2.5 6.4 6 7 3.5-.6 6-3.7 6-7V4L8 1zm0 9.5c-2.2 0-3.5-1-3.5-2 0-.6.4-1.1 1.1-1.45C6.2 6.85 7 6.6 8 6.6s1.8.25 2.4.55c.7.35 1.1.85 1.1 1.45 0 1-1.3 2-3.5 2zm1.1-5.7c0 .6-.5 1.1-1.1 1.1s-1.1-.5-1.1-1.1.5-1.1 1.1-1.1 1.1.5 1.1 1.1z"/></svg>
+    </div>
+    LicenseHub
+  </a>
+</nav>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-sub">Sign in to your account to continue</p>
+
+    <div class="alert alert-success" id="verified-msg">Your email has been verified. You can sign in now.</div>
+    <div class="alert alert-error"   id="error-msg"></div>
+
+    <form id="login-form" autocomplete="on">
+      <div class="field" style="animation: fieldIn 0.4s 0.1s both">
+        <label for="email">Email address</label>
+        <div class="input-wrap">
+          <input type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email">
+          <div class="input-line"></div>
+        </div>
+      </div>
+
+      <div class="field" style="animation: fieldIn 0.4s 0.18s both">
+        <label for="password">
+          Password
+          <a href="/forgot-password">Forgot password?</a>
+        </label>
+        <div class="input-wrap">
+          <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+          <div class="input-line"></div>
+        </div>
+      </div>
+
+      <div style="animation: fieldIn 0.4s 0.26s both">
+        <button type="submit" class="btn-submit" id="submit-btn">Sign in</button>
+      </div>
+    </form>
+
+    <div class="auth-footer" style="animation: fieldIn 0.4s 0.34s both">
+      Don't have an account? <a href="/register">Create one free</a>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes fieldIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<script>
+// Show verified banner
+if (new URLSearchParams(location.search).get('verified')) {
+  document.getElementById('verified-msg').classList.add('show');
+}
+
+// Ripple effect on button
+document.getElementById('submit-btn').addEventListener('click', function(e) {
+  const r = document.createElement('span');
+  r.className = 'ripple';
+  const rect = this.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  r.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`;
+  this.appendChild(r);
+  setTimeout(() => r.remove(), 700);
+});
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  const err = document.getElementById('error-msg');
+  err.classList.remove('show');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-dot"></span><span class="spinner-dot"></span><span class="spinner-dot"></span>';
+
+  try {
+    const res  = await fetch('/api/login', { method: 'POST', body: new FormData(e.target) });
+    const data = await res.json();
+
+    if (!res.ok) {
+      err.textContent = data.detail || 'Invalid email or password.';
+      err.classList.add('show');
+      btn.disabled = false; btn.textContent = 'Sign in';
+      // Shake animation on error
+      document.querySelector('.auth-card').style.animation = 'shake 0.4s ease';
+      setTimeout(() => document.querySelector('.auth-card').style.animation = '', 400);
+      return;
+    }
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('email', data.email);
+    btn.textContent = '✓ Redirecting…';
+    btn.style.background = 'linear-gradient(135deg, #059669, #10b981)';
+    setTimeout(() => window.location.href = '/dashboard', 400);
+  } catch {
+    err.textContent = 'Network error — please try again.';
+    err.classList.add('show');
+    btn.disabled = false; btn.textContent = 'Sign in';
+  }
+});
+</script>
+
+<style>
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-8px)}
+  40%{transform:translateX(8px)}
+  60%{transform:translateX(-5px)}
+  80%{transform:translateX(5px)}
+}
+</style>
+</body>
+</html>

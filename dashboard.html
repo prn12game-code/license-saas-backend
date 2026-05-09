@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LicenseHub Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070b14;--bg2:#0c1220;--bg3:#111827;
+  --glass:rgba(255,255,255,.04);--glass2:rgba(255,255,255,.07);
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
+  --blue:#3b82f6;--blue-h:#60a5fa;--blue-glow:rgba(59,130,246,.3);--blue-dim:rgba(59,130,246,.1);
+  --cyan:#22d3ee;--purple:#a78bfa;
+  --txt:#f1f5f9;--txt2:#94a3b8;--txt3:#475569;
+  --ok:#34d399;--ok-bg:rgba(52,211,153,.1);--ok-bd:rgba(52,211,153,.2);
+  --err:#f87171;--err-bg:rgba(248,113,113,.1);--err-bd:rgba(248,113,113,.2);
+  --warn:#fbbf24;--warn-bg:rgba(251,191,36,.1);--warn-bd:rgba(251,191,36,.2);
+  --sw:250px;--r:10px;--rlg:14px;
+  --font:'Plus Jakarta Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--txt);font-size:14px;line-height:1.6;display:flex;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 70% 50% at 10% 10%,rgba(59,130,246,.08) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 90% 90%,rgba(34,211,238,.05) 0%,transparent 60%)}
+
+/* Sidebar */
+.sidebar{width:var(--sw);min-height:100vh;flex-shrink:0;background:rgba(12,18,32,.9);border-right:1px solid var(--border);display:flex;flex-direction:column;position:relative;z-index:10;backdrop-filter:blur(20px);overflow-y:auto}
+.slogo{padding:1.25rem 1.25rem .75rem;display:flex;align-items:center;gap:10px;font-size:1rem;font-weight:700;color:var(--txt);text-decoration:none;letter-spacing:-.02em}
+.lm{width:32px;height:32px;flex-shrink:0;background:linear-gradient(135deg,var(--blue),var(--cyan));border-radius:9px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px var(--blue-glow)}
+.lm svg{width:15px;height:15px;fill:white}
+.plan-chip{margin:.5rem .875rem;padding:.5rem .75rem;border-radius:var(--r);display:flex;align-items:center;gap:8px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .2s}
+.plan-free{background:var(--glass);border:1px solid var(--border);color:var(--txt3)}
+.plan-starter{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.25);color:var(--blue-h)}
+.plan-pro{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.25);color:var(--purple)}
+.plan-vip{background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.25);color:var(--warn)}
+.ssec{padding:.875rem .875rem 0}
+.slbl{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--txt3);padding:0 .625rem;margin-bottom:4px}
+.ni{display:flex;align-items:center;gap:9px;padding:.5rem .625rem;border-radius:var(--r);font-size:.8125rem;font-weight:500;color:var(--txt3);cursor:pointer;transition:all .18s;margin-bottom:2px;text-decoration:none;position:relative}
+.ni svg{width:15px;height:15px;flex-shrink:0}
+.ni:hover{background:var(--glass2);color:var(--txt2)}
+.ni.on{background:var(--blue-dim);color:var(--blue-h)}
+.ni.on::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:2px;background:linear-gradient(180deg,var(--blue),var(--cyan));border-radius:0 2px 2px 0}
+.sbot{margin-top:auto;padding:1rem;border-top:1px solid var(--border)}
+.uchip{display:flex;align-items:center;gap:10px;padding:.625rem .75rem;border-radius:var(--r);background:var(--glass);border:1px solid var(--border);transition:all .18s}
+.uchip:hover{background:var(--glass2)}
+.uav{width:30px;height:30px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:white}
+.uem{font-size:.73rem;color:var(--txt2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.lbtn{background:none;border:none;cursor:pointer;color:var(--txt3);padding:4px;border-radius:6px;transition:all .15s;display:flex}
+.lbtn:hover{color:var(--err);background:var(--err-bg)}
+.lbtn svg{width:13px;height:13px}
+
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;min-height:100vh;overflow-y:auto;position:relative;z-index:1}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.75rem;background:rgba(7,11,20,.7);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5}
+.ptitle{font-size:.9375rem;font-weight:700;color:var(--txt);letter-spacing:-.02em}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:.4375rem .9375rem;border-radius:var(--r);font-family:var(--font);font-size:.8rem;font-weight:600;cursor:pointer;transition:all .18s;text-decoration:none;border:none;white-space:nowrap}
+.btn svg{width:13px;height:13px}
+.btn-blue{background:linear-gradient(135deg,var(--blue),#2563eb);color:white;box-shadow:0 2px 10px var(--blue-glow)}
+.btn-blue:hover{transform:translateY(-1px);box-shadow:0 4px 18px var(--blue-glow)}
+.btn-ol{background:var(--glass);border:1px solid var(--border);color:var(--txt2)}
+.btn-ol:hover{background:var(--glass2);border-color:var(--border2);color:var(--txt)}
+.btn-danger{background:var(--err-bg);border:1px solid var(--err-bd);color:var(--err)}
+.btn-ok{background:var(--ok-bg);border:1px solid var(--ok-bd);color:var(--ok)}
+
+/* Panels */
+.panel{display:none;padding:1.75rem;animation:panelIn .25s var(--ease) both}
+.panel.on{display:block}
+@keyframes panelIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* Stats */
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem}
+.sc{background:var(--glass);border:1px solid var(--border);border-radius:var(--rlg);padding:1.125rem 1.25rem;transition:all .2s;position:relative;overflow:hidden;cursor:default}
+.sc:hover{border-color:var(--border2);transform:translateY(-2px)}
+.sl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);margin-bottom:6px}
+.sv{font-size:1.5rem;font-weight:800;letter-spacing:-.04em;color:var(--txt)}
+.sv-sm{font-size:1rem;font-weight:600}
+.stag{display:inline-flex;align-items:center;margin-top:5px;font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:100px}
+.tag-ok{background:var(--ok-bg);color:var(--ok)}
+.tag-warn{background:var(--warn-bg);color:var(--warn)}
+.tag-n{background:var(--glass);color:var(--txt3)}
+.tag-blue{background:var(--blue-dim);color:var(--blue-h)}
+
+/* Currency breakdown */
+.currencies{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.cur-tag{font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:100px;background:var(--glass2);color:var(--txt2);border:1px solid var(--border)}
+.expand-btn{font-size:.7rem;color:var(--blue-h);cursor:pointer;background:none;border:none;font-family:var(--font);text-decoration:underline;margin-top:4px}
+
+/* Table */
+.tcard{background:var(--glass);border:1px solid var(--border);border-radius:var(--rlg);overflow:hidden}
+.thead2{display:flex;align-items:center;justify-content:space-between;padding:.875rem 1.25rem;border-bottom:1px solid var(--border);gap:1rem;flex-wrap:wrap}
+.ttitle{font-size:.875rem;font-weight:700;color:var(--txt)}
+.search-wrap{position:relative;flex:1;max-width:220px}
+.search-wrap input{width:100%;padding:.4rem .75rem .4rem 2rem;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;color:var(--txt);font-family:var(--font);font-size:.8rem;outline:none;transition:all .15s}
+.search-wrap input:focus{border-color:var(--blue);background:rgba(59,130,246,.06)}
+.search-wrap svg{position:absolute;left:.625rem;top:50%;transform:translateY(-50%);width:13px;height:13px;fill:var(--txt3);pointer-events:none}
+.tabs{display:flex;gap:4px}
+.tab{padding:.3rem .875rem;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;color:var(--txt3);background:none;border:none;font-family:var(--font);transition:all .15s}
+.tab:hover{color:var(--txt2);background:var(--glass)}
+.tab.on{background:var(--blue-dim);color:var(--blue-h)}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:.5rem 1.25rem;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);background:rgba(255,255,255,.02);border-bottom:1px solid var(--border)}
+td{padding:.75rem 1.25rem;font-size:.8125rem;color:var(--txt2);border-bottom:1px solid var(--border);transition:background .15s}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--glass)}
+.mono{font-family:var(--mono);font-size:.75rem;color:var(--txt3)}
+.badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:100px;font-size:.7rem;font-weight:600}
+.b-paid{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-bd)}
+.b-pending{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-bd)}
+.b-overdue{background:var(--err-bg);color:var(--err);border:1px solid var(--err-bd)}
+.time-ago{font-size:.72rem;color:var(--txt3)}
+.abtn{background:none;border:1px solid var(--border);padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;color:var(--txt3);cursor:pointer;transition:all .15s;font-family:var(--font)}
+.abtn-ok:hover{border-color:var(--ok);color:var(--ok);background:var(--ok-bg)}
+.abtn-view:hover{border-color:var(--blue);color:var(--blue-h);background:var(--blue-dim)}
+
+/* Forms */
+.fsec{background:var(--glass);border:1px solid var(--border);border-radius:var(--rlg);padding:1.5rem;margin-bottom:1.125rem;transition:border-color .2s}
+.fsec:focus-within{border-color:var(--border2)}
+.fst{font-size:.875rem;font-weight:700;color:var(--txt);margin-bottom:1.125rem;padding-bottom:.875rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.fg.s{grid-template-columns:1fr}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+.f{display:flex;flex-direction:column;gap:5px}
+.f label{font-size:.72rem;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.07em}
+.f input,.f select,.f textarea{padding:.6875rem .9375rem;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:var(--r);color:var(--txt);font-family:var(--font);font-size:.875rem;outline:none;transition:all .18s;appearance:none}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--blue);background:rgba(59,130,246,.06);box-shadow:0 0 0 3px var(--blue-glow)}
+.f input::placeholder,.f textarea::placeholder{color:var(--txt3)}
+.f select option{background:var(--bg3);color:var(--txt)}
+.f textarea{resize:vertical;min-height:100px;line-height:1.6}
+
+/* Alerts */
+.ial{padding:.6875rem 1rem;border-radius:var(--r);font-size:.8125rem;font-weight:500;margin-bottom:1rem;display:none;align-items:center;gap:8px;animation:alertIn .3s ease;border:1px solid transparent}
+.ial.show{display:flex}
+.ial-e{background:var(--err-bg);color:var(--err);border-color:var(--err-bd)}
+.ial-e::before{content:'⚠';flex-shrink:0}
+.ial-ok{background:var(--ok-bg);color:var(--ok);border-color:var(--ok-bd)}
+.ial-ok::before{content:'✓';flex-shrink:0}
+@keyframes alertIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+/* Spinner */
+.sp{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin:2.5rem auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Panel header */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap}
+.ph h2{font-size:1.1875rem;font-weight:800;letter-spacing:-.035em;color:var(--txt)}
+.ph p{font-size:.8125rem;color:var(--txt3);margin-top:2px}
+
+/* Modal / detail panel */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:100;display:none;align-items:center;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rlg);padding:2rem;max-width:520px;width:90%;max-height:90vh;overflow-y:auto;animation:modalIn .25s var(--ease)}
+@keyframes modalIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.modal-title{font-size:1.0625rem;font-weight:700;color:var(--txt);margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between}
+.modal-close{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:1.25rem;transition:color .15s}
+.modal-close:hover{color:var(--txt)}
+.detail-row{display:flex;align-items:flex-start;padding:.625rem 0;border-bottom:1px solid var(--border)}
+.detail-row:last-child{border-bottom:none}
+.detail-lbl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--txt3);width:130px;flex-shrink:0;margin-top:2px}
+.detail-val{font-size:.875rem;color:var(--txt2);flex:1;line-height:1.5}
+.detail-val.strong{color:var(--txt);font-weight:600}
+
+/* Email preview modal */
+.preview-body{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;font-size:.875rem;color:var(--txt2);line-height:1.7;white-space:pre-wrap;max-height:300px;overflow-y:auto;font-family:var(--mono)}
+
+/* Placeholder tags */
+.ph-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:.875rem}
+.ph-tag{font-family:var(--mono);font-size:.75rem;padding:3px 10px;border-radius:6px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:var(--blue-h);cursor:pointer;transition:all .15s}
+.ph-tag:hover{background:rgba(59,130,246,.2)}
+
+/* Empty */
+.empty{padding:3rem 1.5rem;text-align:center;color:var(--txt3)}
+.empty-icon{font-size:2rem;margin-bottom:.75rem;opacity:.4}
+.empty h3{font-size:.875rem;font-weight:600;color:var(--txt2);margin-bottom:.375rem}
+.empty p{font-size:.8rem}
+
+/* Token packages */
+.pkg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:1rem}
+.pkg-card{background:var(--glass);border:1px solid var(--border);border-radius:var(--rlg);padding:1.5rem 1.25rem;transition:all .2s;position:relative;overflow:hidden}
+.pkg-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--blue),var(--cyan));transform:scaleX(0);transition:transform .3s}
+.pkg-card:hover{border-color:var(--border2);transform:translateY(-3px)}
+.pkg-card:hover::before{transform:scaleX(1)}
+.pkg-name{font-size:.875rem;font-weight:700;color:var(--txt);margin-bottom:.25rem}
+.pkg-desc{font-size:.75rem;color:var(--txt3);margin-bottom:1rem;line-height:1.5}
+.pkg-tokens{font-size:1.5rem;font-weight:800;letter-spacing:-.04em;color:var(--purple)}
+.pkg-tokens span{font-size:.75rem;font-weight:500;color:var(--txt3)}
+.pkg-price{font-size:.875rem;font-weight:600;color:var(--txt2);margin-top:.25rem}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <a href="/" class="slogo">
+    <div class="lm"><svg viewBox="0 0 16 16"><path d="M8 1L2 4v4c0 3.3 2.5 6.4 6 7 3.5-.6 6-3.7 6-7V4L8 1z"/></svg></div>
+    LicenseHub
+  </a>
+
+  <!-- Plan chip -->
+  <div class="plan-chip plan-free" id="plan-chip" onclick="sw('settings')">
+    <span id="plan-icon">🆓</span>
+    <span id="plan-label">Free</span>
+    <span style="margin-left:auto;font-size:.65rem;opacity:.7" data-i18n="upgrade">Upgrade →</span>
+  </div>
+
+  <div class="ssec">
+    <div class="slbl" data-i18n="nav_overview">Overview</div>
+    <a class="ni on" data-panel="overview" href="#">
+      <svg fill="currentColor" viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5V6a.5.5 0 0 1-1 0V4.5A.5.5 0 0 1 8 4z"/><circle cx="8" cy="10" r="3"/></svg>
+      <span data-i18n="nav_dashboard">Dashboard</span>
+    </a>
+  </div>
+
+  <div class="ssec">
+    <div class="slbl" data-i18n="nav_billing">Billing</div>
+    <a class="ni" data-panel="invoices" href="#">
+      <svg fill="currentColor" viewBox="0 0 16 16"><path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5L9.5 0zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/></svg>
+      <span data-i18n="nav_invoices">Invoices</span>
+    </a>
+    <a class="ni" data-panel="new-invoice" href="#">
+      <svg fill="currentColor" viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>
+      <span data-i18n="nav_new_invoice">New Invoice</span>
+    </a>
+    <a class="ni" data-panel="email-template" href="#">
+      <svg fill="currentColor" viewBox="0 0 16 16"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741Z"/></svg>
+      <span data-i18n="nav_email_template">Email Template</span>
+    </a>
+  </div>
+
+  <div class="ssec">
+    <div class="slbl" data-i18n="nav_access">Access</div>
+    <a class="ni" data-panel="license" href="#">
+      <svg fill="currentColor" viewBox="0 0 16 16"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
+      <span data-i18n="nav_license">My License</span>
+    </a>
+    <a class="ni" data-panel="tokens" href="#">
+      <svg fill="currentColor" viewBox="0 0 16 16"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 13A6 6 0 1 1 8 2a6 6 0 0 1 0 12z"/></svg>
+      <span data-i18n="nav_tokens">Tokens</span>
+    </a>
+  </div>
+
+  <div class="ssec">
+    <div class="slbl" data-i18n="nav_account">Account</div>
+    <a class="ni" data-panel="smtp" href="#">
+      <svg fill="currentColor" viewBox="0 0 16 16"><path d="M2 2a2 2 0 0 0-2 2v8.01A2 2 0 0 0 2 14h5.5a.5.5 0 0 0 0-1H2a1 1 0 0 1-.966-.741L5.53 9.41a2.02 2.02 0 0 0-.342.139l-3.2 1.96V6.12l6.664 4.148a.5.5 0 0 0 .674-.15L16 5.5V4a2 2 0 0 0-2-2H2Z"/></svg>
+      <span data-i18n="nav_smtp">SMTP</span>
+    </a>
+    <a class="ni" data-panel="webhook" href="#">
+      <svg fill="currentColor" viewBox="0 0 16 16"><path d="M4.475 5.458c-.284 0-.514-.237-.47-.517C4.28 3.24 5.576 2 7.825 2c2.25 0 3.767 1.36 3.767 3.215 0 1.344-.665 2.288-1.79 2.973l-1.03.63c-.267.163-.495.342-.695.534a2.698 2.698 0 0 0-.571.93c-.09.27-.09.524-.09.818v.344c0 .286-.241.551-.54.551H5.893c-.298 0-.54-.25-.54-.551V10.3c0-.67.14-1.301.42-1.865.285-.564.694-1.05 1.233-1.454l.857-.607.604-.45c.329-.25.555-.54.69-.86.135-.322.202-.682.202-1.08 0-.818-.509-1.367-1.329-1.367-.83 0-1.39.516-1.508 1.336-.041.252-.266.436-.505.436H4.476zm2.556 5.942c-.55 0-.982-.419-.982-.98 0-.55.433-.984.982-.984.56 0 .983.434.983.984 0 .56-.424.98-.983.98z"/></svg>
+      <span data-i18n="nav_webhooks">Webhooks</span>
+    </a>
+    <a class="ni" data-panel="settings" href="#">
+      <svg fill="currentColor" viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg>
+      <span data-i18n="nav_settings">Settings</span>
+    </a>
+  </div>
+
+  <div class="sbot">
+    <div class="uchip">
+      <div class="uav" id="uav">?</div>
+      <div class="uem" id="uem">Loading…</div>
+      <button class="lbtn" onclick="logout()" title="Sign out">
+        <svg fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/><path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/></svg>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="topbar">
+    <div class="ptitle" id="ptitle">Dashboard</div>
+    <div style="display:flex;gap:8px">
+      <a href="/api/docs" target="_blank" class="btn btn-ol">API docs</a>
+    </div>
+  </div>
+
+  <!-- Overview -->
+  <div class="panel on" id="panel-overview">
+    <div class="sg">
+      <div class="sc">
+        <div class="sl" data-i18n="revenue">Revenue</div>
+        <div id="s-rev-main" class="sv">—</div>
+        <div id="s-rev-currencies" class="currencies"></div>
+        <button class="expand-btn" id="s-rev-expand" style="display:none" onclick="toggleRevExpand()">+ xem thêm</button>
+      </div>
+      <div class="sc">
+        <div class="sl" data-i18n="pending">Pending</div>
+        <div id="s-pend-main" class="sv">—</div>
+        <div id="s-pend-currencies" class="currencies"></div>
+      </div>
+      <div class="sc">
+        <div class="sl" data-i18n="license">License</div>
+        <div class="sv" id="s-lic">—</div>
+        <div class="stag tag-n" id="s-ll">—</div>
+      </div>
+      <div class="sc" onclick="sw('tokens')" style="cursor:pointer">
+        <div class="sl">Tokens</div>
+        <div class="sv" id="s-tok">—</div>
+        <div class="stag tag-blue" data-i18n="buy_more">Buy more →</div>
+      </div>
+    </div>
+    <div class="tcard">
+      <div class="thead2">
+        <div class="ttitle" data-i18n="recent_invoices">Recent invoices</div>
+        <button class="btn btn-blue" onclick="sw('new-invoice')">+ <span data-i18n="new_invoice">New</span></button>
+      </div>
+      <div id="ov-inv"><div class="sp"></div></div>
+    </div>
+  </div>
+
+  <!-- Invoices -->
+  <div class="panel" id="panel-invoices">
+    <div class="ph">
+      <div><h2 data-i18n="nav_invoices">Invoices</h2><p data-i18n="invoices_sub">Manage all your invoices</p></div>
+      <button class="btn btn-blue" onclick="sw('new-invoice')">+ <span data-i18n="new_invoice">New Invoice</span></button>
+    </div>
+    <div class="tcard">
+      <div class="thead2">
+        <div class="tabs">
+          <button class="tab on" data-tab="all" onclick="setTab('all')">All</button>
+          <button class="tab" data-tab="pending" onclick="setTab('pending')" data-i18n-tab="pending">Unpaid</button>
+          <button class="tab" data-tab="paid" onclick="setTab('paid')" data-i18n-tab="paid">Paid</button>
+        </div>
+        <div class="search-wrap">
+          <svg viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+          <input type="text" id="inv-search" placeholder="Search…" oninput="filterInvoices()">
+        </div>
+      </div>
+      <div id="inv-tbl"><div class="sp"></div></div>
+    </div>
+  </div>
+
+  <!-- New invoice -->
+  <div class="panel" id="panel-new-invoice">
+    <div class="ph"><div><h2 data-i18n="nav_new_invoice">New Invoice</h2><p data-i18n="new_invoice_sub">Create and send automatically</p></div></div>
+    <div class="ial ial-e" id="ni-err"></div>
+    <div class="ial ial-ok" id="ni-ok"></div>
+    <form id="inv-form">
+      <div class="fsec">
+        <div class="fst" data-i18n="customer_details">Customer details</div>
+        <div class="fg">
+          <div class="f"><label data-i18n="customer_name">Customer name</label><input type="text" name="customer_name" placeholder="Acme Corp" required></div>
+          <div class="f"><label data-i18n="customer_email">Customer email</label><input type="email" name="customer_email" placeholder="billing@acme.com" required></div>
+        </div>
+      </div>
+      <div class="fsec">
+        <div class="fst" data-i18n="invoice_details">Invoice details</div>
+        <div class="fg3">
+          <div class="f"><label data-i18n="amount">Amount</label><input type="number" name="total" placeholder="299.00" min="0.01" step="0.01" required></div>
+          <div class="f"><label data-i18n="currency">Currency</label><select name="currency" id="inv-currency"></select></div>
+          <div class="f"><label data-i18n="due_date">Due date</label><input type="date" name="due_date"></div>
+        </div>
+        <div class="fg" style="margin-top:1rem">
+          <div class="f">
+            <label data-i18n="remind_every">Remind every (days, 0 = off)</label>
+            <input type="number" name="remind_every_days" value="0" min="0" max="90">
+          </div>
+          <div class="f"><label data-i18n="notes">Notes (optional)</label><input type="text" name="notes" placeholder="Bank: VCB 123456..."></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button type="submit" class="btn btn-blue" id="ni-btn" style="padding:.7rem 1.75rem">
+          <span data-i18n="create_send">Create &amp; send</span>
+        </button>
+        <button type="button" class="btn btn-ol" onclick="previewEmail()" style="padding:.7rem 1.25rem">
+          <span data-i18n="preview">Preview email</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Email template -->
+  <div class="panel" id="panel-email-template">
+    <div class="ph"><div><h2 data-i18n="nav_email_template">Email Template</h2><p data-i18n="template_sub">Customize the email sent to customers</p></div></div>
+    <div class="ial ial-e" id="et-err"></div>
+    <div class="ial ial-ok" id="et-ok"></div>
+    <div class="fsec">
+      <div class="fst">
+        <span data-i18n="template_editor">Template editor</span>
+        <button class="btn btn-ol" onclick="resetTemplate()" style="font-size:.75rem;padding:3px 10px" data-i18n="reset_default">Reset to default</button>
+      </div>
+      <div class="f" style="margin-bottom:1rem">
+        <label data-i18n="template_content">Email content</label>
+        <textarea id="et-content" rows="10" style="min-height:200px" placeholder="Xin chào {CUSTOMER},..."></textarea>
+      </div>
+      <div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--txt3);margin-bottom:.5rem" data-i18n="available_placeholders">Available placeholders (click to insert)</div>
+        <div class="ph-tags">
+          <span class="ph-tag" onclick="insertPh('{CUSTOMER}')">{CUSTOMER}</span>
+          <span class="ph-tag" onclick="insertPh('{EMAIL}')">{EMAIL}</span>
+          <span class="ph-tag" onclick="insertPh('{AMOUNT}')">{AMOUNT}</span>
+          <span class="ph-tag" onclick="insertPh('{CURRENCY}')">{CURRENCY}</span>
+          <span class="ph-tag" onclick="insertPh('{DUE_DATE}')">{DUE_DATE}</span>
+          <span class="ph-tag" onclick="insertPh('{INVOICE_ID}')">{INVOICE_ID}</span>
+        </div>
+        <div style="font-size:.75rem;color:var(--txt3);margin-top:.75rem;line-height:1.6" data-i18n="placeholder_note">
+          ⚠ Placeholders must be written in UPPERCASE and wrapped in {}. They will be automatically replaced with customer data when sending.
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-blue" onclick="saveTemplate()" style="padding:.7rem 1.75rem" data-i18n="save_template">Save template</button>
+  </div>
+
+  <!-- License -->
+  <div class="panel" id="panel-license">
+    <div class="ph"><div><h2 data-i18n="nav_license">My License</h2></div></div>
+    <div class="fsec" style="max-width:460px"><div id="lic-st"><div class="sp"></div></div></div>
+    <div class="fsec" style="max-width:460px;margin-top:1rem">
+      <div class="fst" data-i18n="activate_key">Activate a license key</div>
+      <div class="ial ial-e" id="ac-err"></div>
+      <div class="ial ial-ok" id="ac-ok"></div>
+      <form id="act-form">
+        <div class="fg s">
+          <div class="f"><label data-i18n="license_key">License key</label><input type="text" name="code" placeholder="XXXX-XXXX-XXXX-XXXX" required style="font-family:var(--mono);letter-spacing:.06em"></div>
+          <div class="f"><label>Device ID</label><input type="text" name="device_id" placeholder="my-laptop" required></div>
+        </div>
+        <button type="submit" class="btn btn-blue" id="ac-btn" style="padding:.7rem 1.75rem;margin-top:1rem" data-i18n="activate">Activate</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tokens -->
+  <div class="panel" id="panel-tokens">
+    <div class="ph"><div><h2>Tokens</h2></div></div>
+    <div class="sg" style="grid-template-columns:repeat(auto-fit,minmax(140px,180px))">
+      <div class="sc"><div class="sl" data-i18n="balance">Balance</div><div class="sv" id="tok-bal">—</div><div class="stag tag-blue" data-i18n="available">available</div></div>
+    </div>
+    <div class="tcard" style="margin-bottom:1.5rem">
+      <div class="thead2"><div class="ttitle" data-i18n="history">Transaction history</div></div>
+      <div id="tok-hist"><div class="sp"></div></div>
+    </div>
+    <h3 style="font-size:.9375rem;font-weight:700;margin-bottom:1rem" data-i18n="packages">Available packages</h3>
+    <div id="pkg-list"><div class="sp"></div></div>
+  </div>
+
+  <!-- SMTP -->
+  <div class="panel" id="panel-smtp">
+    <div class="ph"><div><h2 data-i18n="nav_smtp">SMTP Settings</h2></div></div>
+    <div class="ial ial-e" id="sm-err"></div>
+    <div class="ial ial-ok" id="sm-ok"></div>
+    <form id="smtp-form" style="max-width:480px">
+      <div class="fsec"><div class="fst">Gmail / SMTP</div><div class="fg s">
+        <div class="f"><label data-i18n="email_address">Email address</label><input type="email" name="email" placeholder="you@gmail.com" required></div>
+        <div class="f"><label data-i18n="app_password">App password</label><input type="password" name="password" required></div>
+      </div></div>
+      <button type="submit" class="btn btn-blue" id="sm-btn" style="padding:.7rem 1.75rem" data-i18n="save">Save</button>
+    </form>
+  </div>
+
+  <!-- Webhook -->
+  <div class="panel" id="panel-webhook">
+    <div class="ph"><div><h2 data-i18n="nav_webhooks">Webhooks</h2></div></div>
+    <div class="ial ial-e" id="wh-err"></div>
+    <div class="ial ial-ok" id="wh-ok"></div>
+    <form id="wh-form" style="max-width:560px">
+      <div class="fsec"><div class="fg s">
+        <div class="f"><label>Endpoint URL</label><input type="url" name="url" id="wh-url" placeholder="https://your-server.com/webhook" required></div>
+      </div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="submit" class="btn btn-blue" id="wh-btn" style="padding:.7rem 1.25rem" data-i18n="save">Save</button>
+        <button type="button" class="btn btn-ol" onclick="testWebhook()" data-i18n="test_ping">Test ping</button>
+        <button type="button" class="btn btn-danger" onclick="deleteWebhook()" data-i18n="remove">Remove</button>
+      </div>
+    </form>
+    <div id="wh-secret-box" style="display:none;max-width:560px;margin-top:1.25rem">
+      <div class="fsec"><div class="fst" data-i18n="signing_secret">Signing secret</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:var(--r);padding:.625rem .875rem;font-family:var(--mono);font-size:.75rem;color:var(--txt2);word-break:break-all" id="wh-secret-val">—</div>
+          <button class="btn btn-ol" onclick="copySecret()" data-i18n="copy">Copy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div class="panel" id="panel-settings">
+    <div class="ph"><div><h2 data-i18n="nav_settings">Settings</h2></div></div>
+    <div class="ial ial-e" id="st-err"></div>
+    <div class="ial ial-ok" id="st-ok"></div>
+    <form id="settings-form" style="max-width:520px">
+      <div class="fsec">
+        <div class="fst" data-i18n="preferences">Preferences</div>
+        <div class="fg">
+          <div class="f">
+            <label data-i18n="language">Language</label>
+            <select name="language" id="lang-select">
+              <option value="en">🇬🇧 English</option>
+              <option value="vi">🇻🇳 Tiếng Việt</option>
+              <option value="zh">🇨🇳 中文</option>
+              <option value="ru">🇷🇺 Русский</option>
+              <option value="fr">🇫🇷 Français</option>
+            </select>
+          </div>
+          <div class="f">
+            <label data-i18n="default_currency">Default currency</label>
+            <select name="default_currency" id="def-currency"></select>
+          </div>
+        </div>
+        <div class="fg" style="margin-top:1rem">
+          <div class="f">
+            <label data-i18n="max_reminders">Max reminders per invoice</label>
+            <input type="number" name="max_reminders" min="1" max="20" value="5">
+          </div>
+        </div>
+      </div>
+      <div class="fsec">
+        <div class="fst" data-i18n="change_password">Change password</div>
+        <div class="ial ial-e" id="pw-err"></div>
+        <div class="ial ial-ok" id="pw-ok"></div>
+        <div class="fg s">
+          <div class="f"><label data-i18n="current_password">Current password</label><input type="password" id="old-pw" name="old_password"></div>
+          <div class="f"><label data-i18n="new_password">New password</label><input type="password" id="new-pw" name="new_password" minlength="8"></div>
+        </div>
+        <button type="button" class="btn btn-ol" onclick="changePassword()" style="margin-top:1rem" data-i18n="update_password">Update password</button>
+      </div>
+      <button type="submit" class="btn btn-blue" style="padding:.7rem 1.75rem" data-i18n="save_settings">Save settings</button>
+    </form>
+  </div>
+</main>
+
+<!-- Invoice detail modal -->
+<div class="modal-bg" id="inv-modal">
+  <div class="modal">
+    <div class="modal-title">
+      <span data-i18n="invoice_detail">Invoice detail</span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- Email preview modal -->
+<div class="modal-bg" id="preview-modal">
+  <div class="modal">
+    <div class="modal-title">
+      <span data-i18n="email_preview">Email preview</span>
+      <button class="modal-close" onclick="document.getElementById('preview-modal').classList.remove('show')">×</button>
+    </div>
+    <div id="preview-content"></div>
+  </div>
+</div>
+
+<script>
+// ── i18n ──────────────────────────────────────────────────
+const T={
+  en:{nav_overview:'Overview',nav_dashboard:'Dashboard',nav_billing:'Billing',nav_invoices:'Invoices',nav_new_invoice:'New Invoice',nav_email_template:'Email Template',nav_access:'Access',nav_license:'My License',nav_tokens:'Tokens',nav_account:'Account',nav_smtp:'SMTP',nav_webhooks:'Webhooks',nav_settings:'Settings',revenue:'Revenue',pending:'Pending',license:'License',buy_more:'Buy more →',recent_invoices:'Recent invoices',new_invoice:'New Invoice',invoices_sub:'Manage all your invoices',customer_details:'Customer details',invoice_details:'Invoice details',customer_name:'Customer name',customer_email:'Customer email',amount:'Amount',currency:'Currency',due_date:'Due date',remind_every:'Remind every (days, 0=off)',notes:'Notes (optional)',create_send:'Create & send',preview:'Preview email',template_editor:'Template editor',reset_default:'Reset to default',template_content:'Email content',available_placeholders:'Available placeholders (click to insert)',placeholder_note:'⚠ Placeholders must be UPPERCASE in {}.',save_template:'Save template',activate_key:'Activate a license key',license_key:'License key',activate:'Activate',balance:'Balance',available:'available',history:'History',packages:'Packages',email_address:'Email address',app_password:'App password (not main password)',save:'Save',signing_secret:'Signing secret',copy:'Copy',test_ping:'Test ping',remove:'Remove',preferences:'Preferences',language:'Language / Ngôn ngữ',default_currency:'Default currency',max_reminders:'Max reminders per invoice',change_password:'Change password',current_password:'Current password',new_password:'New password',update_password:'Update password',save_settings:'Save settings',invoice_detail:'Invoice detail',email_preview:'Email preview',upgrade:'Upgrade →',invoices_empty:'No invoices yet',invoices_empty_sub:'Create your first invoice to get started',all:'All',paid:'Paid',pending_tab:'Unpaid',overdue:'Overdue'},
+  vi:{nav_overview:'Tổng quan',nav_dashboard:'Tổng quan',nav_billing:'Thanh toán',nav_invoices:'Hóa đơn',nav_new_invoice:'Tạo hóa đơn',nav_email_template:'Mẫu email',nav_access:'Truy cập',nav_license:'License',nav_tokens:'Token',nav_account:'Tài khoản',nav_smtp:'SMTP',nav_webhooks:'Webhook',nav_settings:'Cài đặt',revenue:'Doanh thu',pending:'Chờ thanh toán',license:'License',buy_more:'Mua thêm →',recent_invoices:'Hóa đơn gần đây',new_invoice:'Tạo mới',invoices_sub:'Quản lý tất cả hóa đơn',customer_details:'Thông tin khách hàng',invoice_details:'Chi tiết hóa đơn',customer_name:'Tên khách hàng',customer_email:'Email khách hàng',amount:'Số tiền',currency:'Loại tiền',due_date:'Hạn thanh toán',remind_every:'Nhắc mỗi (ngày, 0=tắt)',notes:'Ghi chú (tùy chọn)',create_send:'Tạo & gửi',preview:'Xem trước email',template_editor:'Soạn mẫu email',reset_default:'Đặt lại mặc định',template_content:'Nội dung email',available_placeholders:'Placeholder có thể dùng (click để chèn)',placeholder_note:'⚠ Placeholder phải viết HOA trong {}.',save_template:'Lưu mẫu',activate_key:'Kích hoạt license key',license_key:'License key',activate:'Kích hoạt',balance:'Số dư',available:'khả dụng',history:'Lịch sử giao dịch',packages:'Gói token',email_address:'Địa chỉ email',app_password:'Mật khẩu ứng dụng',save:'Lưu',signing_secret:'Khóa ký xác thực',copy:'Sao chép',test_ping:'Gửi test',remove:'Xóa',preferences:'Tùy chọn',language:'Ngôn ngữ',default_currency:'Tiền tệ mặc định',max_reminders:'Số lần nhắc tối đa',change_password:'Đổi mật khẩu',current_password:'Mật khẩu hiện tại',new_password:'Mật khẩu mới',update_password:'Cập nhật mật khẩu',save_settings:'Lưu cài đặt',invoice_detail:'Chi tiết hóa đơn',email_preview:'Xem trước email',upgrade:'Nâng cấp →',invoices_empty:'Chưa có hóa đơn nào',invoices_empty_sub:'Tạo hóa đơn đầu tiên để bắt đầu',all:'Tất cả',paid:'Đã TT',pending_tab:'Chưa TT',overdue:'Quá hạn'},
+  zh:{nav_dashboard:'控制台',nav_invoices:'发票',nav_new_invoice:'新建发票',revenue:'收入',pending:'待付款',new_invoice:'新建',create_send:'创建并发送',save:'保存',save_settings:'保存设置',activate:'激活',language:'语言'},
+  ru:{nav_dashboard:'Панель',nav_invoices:'Счета',nav_new_invoice:'Новый счёт',revenue:'Доход',pending:'Ожидание',new_invoice:'Новый',create_send:'Создать и отправить',save:'Сохранить',save_settings:'Сохранить',activate:'Активировать',language:'Язык'},
+  fr:{nav_dashboard:'Tableau',nav_invoices:'Factures',nav_new_invoice:'Nouvelle facture',revenue:'Revenus',pending:'En attente',new_invoice:'Nouveau',create_send:'Créer et envoyer',save:'Enregistrer',save_settings:'Enregistrer',activate:'Activer',language:'Langue'}
+};
+
+let lang = localStorage.getItem('lh_lang') || 'en';
+function t(k){return (T[lang]&&T[lang][k])||T.en[k]||k}
+function applyLang(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(T[lang]&&T[lang][k])el.textContent=T[lang][k]});
+  document.title='LicenseHub Dashboard';
+}
+
+// ── All currencies list ───────────────────────────────────
+const CURRENCIES=[
+  {c:'USD',n:'US Dollar'},{c:'EUR',n:'Euro'},{c:'GBP',n:'British Pound'},
+  {c:'JPY',n:'Japanese Yen'},{c:'CNY',n:'Chinese Yuan'},{c:'AUD',n:'Australian Dollar'},
+  {c:'CAD',n:'Canadian Dollar'},{c:'CHF',n:'Swiss Franc'},{c:'HKD',n:'Hong Kong Dollar'},
+  {c:'SGD',n:'Singapore Dollar'},{c:'NZD',n:'New Zealand Dollar'},
+  {c:'VND',n:'Vietnamese Dong'},{c:'THB',n:'Thai Baht'},{c:'KRW',n:'Korean Won'},
+  {c:'MYR',n:'Malaysian Ringgit'},{c:'IDR',n:'Indonesian Rupiah'},{c:'PHP',n:'Philippine Peso'},
+  {c:'INR',n:'Indian Rupee'},{c:'PKR',n:'Pakistani Rupee'},{c:'BDT',n:'Bangladeshi Taka'},
+  {c:'SEK',n:'Swedish Krona'},{c:'NOK',n:'Norwegian Krone'},{c:'DKK',n:'Danish Krone'},
+  {c:'PLN',n:'Polish Zloty'},{c:'CZK',n:'Czech Koruna'},{c:'HUF',n:'Hungarian Forint'},
+  {c:'RON',n:'Romanian Leu'},{c:'RUB',n:'Russian Ruble'},{c:'UAH',n:'Ukrainian Hryvnia'},
+  {c:'TRY',n:'Turkish Lira'},{c:'AED',n:'UAE Dirham'},{c:'SAR',n:'Saudi Riyal'},
+  {c:'QAR',n:'Qatari Riyal'},{c:'KWD',n:'Kuwaiti Dinar'},{c:'BHD',n:'Bahraini Dinar'},
+  {c:'EGP',n:'Egyptian Pound'},{c:'NGN',n:'Nigerian Naira'},{c:'ZAR',n:'South African Rand'},
+  {c:'KES',n:'Kenyan Shilling'},{c:'MXN',n:'Mexican Peso'},{c:'BRL',n:'Brazilian Real'},
+  {c:'ARS',n:'Argentine Peso'},{c:'CLP',n:'Chilean Peso'},{c:'COP',n:'Colombian Peso'},
+  {c:'PEN',n:'Peruvian Sol'}
+];
+
+function buildCurrencySelect(selId,defVal='USD'){
+  const sel=document.getElementById(selId);if(!sel)return;
+  sel.innerHTML=CURRENCIES.map(x=>`<option value="${x.c}"${x.c===defVal?' selected':''}>${x.c} — ${x.n}</option>`).join('');
+}
+
+// ── Auth & API ────────────────────────────────────────────
+const token=localStorage.getItem('token'),email=localStorage.getItem('email');
+if(!token){window.location.href='/login';}
+if(email){document.getElementById('uem').textContent=email;document.getElementById('uav').textContent=email[0].toUpperCase();}
+function logout(){localStorage.clear();window.location.href='/login';}
+function af(url,opts={}){opts.headers={...(opts.headers||{}),'Authorization':'Bearer '+token};return fetch(url,opts);}
+
+// ── Navigation ────────────────────────────────────────────
+const PANEL_TITLES={overview:'nav_dashboard',invoices:'nav_invoices','new-invoice':'nav_new_invoice','email-template':'nav_email_template',license:'nav_license',tokens:'nav_tokens',smtp:'nav_smtp',webhook:'nav_webhooks',settings:'nav_settings'};
+
+function sw(id){
+  document.querySelectorAll('.ni').forEach(e=>e.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(e=>e.classList.remove('on'));
+  const n=document.querySelector('[data-panel="'+id+'"]');if(n)n.classList.add('on');
+  const p=document.getElementById('panel-'+id);if(p)p.classList.add('on');
+  document.getElementById('ptitle').textContent=t(PANEL_TITLES[id]||id);
+  if(id==='overview')loadOv();
+  if(id==='invoices')loadInv();
+  if(id==='license')loadLic();
+  if(id==='tokens')loadTokens();
+  if(id==='webhook')loadWebhook();
+  if(id==='settings')loadSettings();
+  if(id==='email-template')loadTemplate();
+}
+document.querySelectorAll('.ni').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();sw(el.dataset.panel);}));
+
+// ── Time ago ──────────────────────────────────────────────
+function timeAgo(dt){
+  if(!dt)return'—';
+  const s=Math.floor((Date.now()-new Date(dt).getTime())/1000);
+  if(s<60)return s+'s ago';
+  if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago';
+  if(s<2592000)return Math.floor(s/86400)+'d ago';
+  if(s<31536000)return Math.floor(s/2592000)+'mo ago';
+  return Math.floor(s/31536000)+'y ago';
+}
+
+// ── Invoice status ────────────────────────────────────────
+function invStatus(inv){
+  if(inv.status==='paid')return'paid';
+  if(inv.due_date&&new Date(inv.due_date)<new Date())return'overdue';
+  return'pending';
+}
+
+// ── Currency totals ───────────────────────────────────────
+function buildCurrencyTotals(invs,statusFilter){
+  const map={};
+  invs.filter(i=>i.status===statusFilter).forEach(i=>{map[i.currency]=(map[i.currency]||0)+i.total;});
+  return map;
+}
+function renderCurrencyTags(map,containerId,expandBtnId,maxShow=2){
+  const el=document.getElementById(containerId);if(!el)return;
+  const keys=Object.keys(map);
+  const shown=keys.slice(0,maxShow);
+  const extra=keys.slice(maxShow);
+  el.innerHTML=shown.map(c=>`<span class="cur-tag">${formatMoney(map[c],c)}</span>`).join('');
+  const btn=document.getElementById(expandBtnId);
+  if(btn){btn.style.display=extra.length?'block':'none';btn.onclick=()=>{el.innerHTML=keys.map(c=>`<span class="cur-tag">${formatMoney(map[c],c)}</span>`).join('');btn.style.display='none';}}
+}
+function formatMoney(v,c){
+  if(c==='VND')return v.toLocaleString()+'₫';
+  if(c==='JPY')return '¥'+v.toLocaleString();
+  return v.toFixed(2)+' '+c;
+}
+
+// ── Overview ──────────────────────────────────────────────
+let _invCache=[];
+async function loadOv(){
+  try{
+    const r=await af('/api/invoices');const inv=await r.json();
+    if(!Array.isArray(inv)){logout();return;}
+    _invCache=inv;
+    // Revenue
+    const paid=buildCurrencyTotals(inv,'paid');
+    const pend=buildCurrencyTotals(inv,'pending');
+    const mainCur=Object.keys(paid)[0]||'USD';
+    document.getElementById('s-rev-main').textContent=Object.keys(paid).length?formatMoney(Object.values(paid)[0],Object.keys(paid)[0]):'0.00';
+    renderCurrencyTags(paid,'s-rev-currencies','s-rev-expand');
+    document.getElementById('s-pend-main').textContent=Object.keys(pend).length?formatMoney(Object.values(pend)[0],Object.keys(pend)[0]):'0.00';
+    renderCurrencyTags(pend,'s-pend-currencies','');
+    mkTable(inv.slice(0,5),'ov-inv',false);
+  }catch(e){console.error(e)}
+  try{const r=await af('/api/my-license');const d=await r.json();const e=d.license_expiry;
+    if(!e){document.getElementById('s-lic').textContent='None';document.getElementById('s-ll').textContent='No license';}
+    else if(e==='permanent'){document.getElementById('s-lic').textContent='Active';document.getElementById('s-ll').className='stag tag-ok';document.getElementById('s-ll').textContent='Permanent';}
+    else{const days=Math.ceil((new Date(e)-new Date())/86400000);
+      document.getElementById('s-lic').textContent=days>0?'Active':'Expired';
+      document.getElementById('s-ll').className='stag '+(days>0?'tag-ok':'tag-warn');
+      document.getElementById('s-ll').textContent=days>0?days+' days':'Expired';}
+  }catch{}
+  try{const r=await af('/api/tokens/balance');const d=await r.json();document.getElementById('s-tok').textContent=d.balance;}catch{}
+  try{const r=await af('/api/my-plan');const d=await r.json();updatePlanUI(d);}catch{}
+}
+
+function updatePlanUI(d){
+  const chip=document.getElementById('plan-chip');
+  const icons={free:'🆓',starter:'⭐',pro:'🚀',vip:'👑'};
+  chip.className='plan-chip plan-'+d.plan;
+  document.getElementById('plan-icon').textContent=icons[d.plan]||'🆓';
+  document.getElementById('plan-label').textContent=d.label;
+}
+
+// ── Invoice table ─────────────────────────────────────────
+let _currentTab='all';
+function setTab(tab){
+  _currentTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===tab));
+  filterInvoices();
+}
+function filterInvoices(){
+  const q=(document.getElementById('inv-search')||{value:''}).value.toLowerCase();
+  let invs=_invCache;
+  if(_currentTab==='pending')invs=invs.filter(i=>i.status==='pending');
+  if(_currentTab==='paid')invs=invs.filter(i=>i.status==='paid');
+  if(q)invs=invs.filter(i=>(i.customer_name||'').toLowerCase().includes(q)||(i.customer_email||'').toLowerCase().includes(q));
+  mkTable(invs,'inv-tbl',true);
+}
+async function loadInv(){
+  const r=await af('/api/invoices');const inv=await r.json();
+  if(!Array.isArray(inv)){logout();return;}
+  _invCache=inv;filterInvoices();
+}
+
+function mkTable(invs,cid,showAll=true){
+  const el=document.getElementById(cid);if(!el)return;
+  if(!invs.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">📄</div><h3>${t('invoices_empty')}</h3><p>${t('invoices_empty_sub')}</p></div>`;return;
+  }
+  el.innerHTML='<table><thead><tr><th>'+t('customer_name')+'</th><th>Email</th><th>'+t('amount')+'</th><th>Status</th><th>Due</th><th>'+t('history')+'</th><th></th></tr></thead><tbody>'+
+    invs.map(i=>{
+      const st=invStatus(i);
+      const bClass={'paid':'b-paid','overdue':'b-overdue','pending':'b-pending'}[st];
+      const bLabel={'paid':t('paid'),'overdue':t('overdue'),'pending':t('pending_tab')}[st];
+      const due=i.due_date?`<span style="font-size:.75rem;color:${st==='overdue'?'var(--err)':'var(--txt3)'}">${i.due_date}</span>`:'—';
+      const actions=i.status==='pending'?`<button class="abtn abtn-ok" onclick="mkPaid(${i.id})" style="margin-right:4px">✓</button>`:'';
+      return`<tr>
+        <td style="font-weight:600;color:var(--txt)">${i.customer_name}</td>
+        <td>${i.customer_email}</td>
+        <td style="font-weight:700;color:var(--txt)">${formatMoney(i.total,i.currency)}</td>
+        <td><span class="badge ${bClass}">${bLabel}</span>${i.reminder_count>0?`<span style="font-size:.65rem;color:var(--txt3);margin-left:4px">🔔${i.reminder_count}</span>`:''}</td>
+        <td>${due}</td>
+        <td><span class="time-ago">${timeAgo(i.created_at)}</span></td>
+        <td style="display:flex;gap:4px">${actions}<button class="abtn abtn-view" onclick="viewInvoice(${i.id})">👁</button></td>
+      </tr>`;
+    }).join('')+'</tbody></table>';
+}
+
+async function mkPaid(id){
+  if(!confirm('Mark invoice #'+id+' as paid?'))return;
+  const r=await af('/api/invoice/'+id+'/paid',{method:'POST'});
+  if(r.ok){await loadInv();await loadOv();}
+}
+
+// ── Invoice detail modal ──────────────────────────────────
+async function viewInvoice(id){
+  document.getElementById('inv-modal').classList.add('show');
+  document.getElementById('modal-content').innerHTML='<div class="sp"></div>';
+  const r=await af('/api/invoice/'+id);
+  const i=await r.json();
+  const st=invStatus(i);
+  const bClass={'paid':'b-paid','overdue':'b-overdue','pending':'b-pending'}[st];
+  document.getElementById('modal-content').innerHTML=`
+    <div class="detail-row"><div class="detail-lbl">Status</div><div class="detail-val"><span class="badge ${bClass}">${st}</span></div></div>
+    <div class="detail-row"><div class="detail-lbl">${t('customer_name')}</div><div class="detail-val strong">${i.customer_name}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Email</div><div class="detail-val">${i.customer_email}</div></div>
+    <div class="detail-row"><div class="detail-lbl">${t('amount')}</div><div class="detail-val strong">${formatMoney(i.total,i.currency)}</div></div>
+    <div class="detail-row"><div class="detail-lbl">${t('due_date')}</div><div class="detail-val">${i.due_date||'—'}</div></div>
+    <div class="detail-row"><div class="detail-lbl">${t('notes')}</div><div class="detail-val">${i.notes||'—'}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Reminders</div><div class="detail-val">${i.reminder_count} sent${i.remind_every_days>0?' (every '+i.remind_every_days+'d)':' (off)'}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Last reminded</div><div class="detail-val">${i.last_reminded_at?timeAgo(i.last_reminded_at):'—'}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Created</div><div class="detail-val">${i.created_at?new Date(i.created_at).toLocaleString():'—'}</div></div>
+    <div style="margin-top:1.25rem;padding:.75rem;background:rgba(255,255,255,.03);border-radius:var(--r);font-size:.75rem;color:var(--txt3)">🔒 Read-only — invoices cannot be edited after sending.</div>
+  `;
+}
+function closeModal(){document.getElementById('inv-modal').classList.remove('show');}
+document.getElementById('inv-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+// ── New invoice form ──────────────────────────────────────
+document.getElementById('inv-form').addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  const btn=document.getElementById('ni-btn');const err=document.getElementById('ni-err');const ok=document.getElementById('ni-ok');
+  err.classList.remove('show');ok.classList.remove('show');btn.disabled=true;btn.textContent='Sending…';
+  try{
+    const r=await af('/api/invoice',{method:'POST',body:new FormData(e.target)});
+    const d=await r.json();
+    if(!r.ok){err.textContent=d.detail||'Error.';err.classList.add('show');}
+    else{ok.textContent='Invoice created and sent!';ok.classList.add('show');e.target.reset();loadOv();}
+  }catch{err.textContent='Network error.';err.classList.add('show');}
+  btn.disabled=false;btn.textContent=t('create_send');
+});
+
+// ── Email preview ─────────────────────────────────────────
+function previewEmail(){
+  const fd=new FormData(document.getElementById('inv-form'));
+  const tpl=document.getElementById('et-content')?.value||'Hello {CUSTOMER}, invoice #{INVOICE_ID} for {AMOUNT} {CURRENCY}.';
+  let c=tpl.replace('{CUSTOMER}',fd.get('customer_name')||'[Customer name]');
+  c=c.replace('{EMAIL}',fd.get('customer_email')||'[Email]');
+  c=c.replace('{AMOUNT}',fd.get('total')||'[Amount]');
+  c=c.replace('{CURRENCY}',fd.get('currency')||'USD');
+  c=c.replace('{DUE_DATE}',fd.get('due_date')||'[Due date]');
+  c=c.replace('{INVOICE_ID}','[AUTO]');
+  document.getElementById('preview-content').innerHTML=`<div class="preview-body">${c}</div>`;
+  document.getElementById('preview-modal').classList.add('show');
+}
+document.getElementById('preview-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)e.target.classList.remove('show');});
+
+// ── Email template ────────────────────────────────────────
+async function loadTemplate(){
+  const r=await af('/api/settings');const d=await r.json();
+  document.getElementById('et-content').value=d.email_template||defaultTemplate();
+}
+function defaultTemplate(){
+  return'Xin chào {CUSTOMER},\n\nBạn có hóa đơn #{INVOICE_ID} với số tiền {AMOUNT} {CURRENCY}.\nHạn thanh toán: {DUE_DATE}\n\nVui lòng thanh toán đúng hạn.\n\nTrân trọng.'
+}
+function resetTemplate(){document.getElementById('et-content').value=defaultTemplate();}
+function insertPh(ph){const ta=document.getElementById('et-content');const s=ta.selectionStart;ta.value=ta.value.slice(0,s)+ph+ta.value.slice(ta.selectionEnd);ta.focus();ta.selectionStart=ta.selectionEnd=s+ph.length;}
+async function saveTemplate(){
+  const err=document.getElementById('et-err');const ok=document.getElementById('et-ok');
+  err.classList.remove('show');ok.classList.remove('show');
+  const fd=new FormData();fd.append('email_template',document.getElementById('et-content').value);
+  const r=await af('/api/settings',{method:'POST',body:fd});
+  const d=await r.json();
+  if(!r.ok){err.textContent=d.detail||'Error.';err.classList.add('show');}
+  else{ok.textContent='Template saved!';ok.classList.add('show');}
+}
+
+// ── License ───────────────────────────────────────────────
+async function loadLic(){
+  const el=document.getElementById('lic-st');
+  try{const r=await af('/api/my-license');const d=await r.json();const e=d.license_expiry;
+    if(!e)el.innerHTML=`<p style="color:var(--txt3);font-size:.875rem">No license activated.</p>`;
+    else if(e==='permanent')el.innerHTML=`<span class="badge b-paid" style="font-size:.8rem;padding:4px 14px">Permanent ♾</span>`;
+    else{const days=Math.ceil((new Date(e)-new Date())/86400000);const cls=days>7?'b-paid':days>0?'b-pending':'b-overdue';
+      el.innerHTML=`<span class="badge ${cls}" style="font-size:.8rem;padding:4px 14px">${days>0?days+' days remaining':'Expired'}</span><span style="font-size:.8rem;color:var(--txt3);margin-left:8px">→ ${new Date(e).toLocaleDateString()}</span>`;}
+  }catch{el.innerHTML=`<p style="color:var(--err)">Could not load.</p>`;}
+}
+document.getElementById('act-form').addEventListener('submit',async(e)=>{
+  e.preventDefault();const btn=document.getElementById('ac-btn');const err=document.getElementById('ac-err');const ok=document.getElementById('ac-ok');
+  err.classList.remove('show');ok.classList.remove('show');btn.disabled=true;btn.textContent='…';
+  try{const r=await af('/api/activate',{method:'POST',body:new FormData(e.target)});const d=await r.json();
+    if(!r.ok){err.textContent=d.detail||'Failed.';err.classList.add('show');}
+    else{ok.textContent='Activated! '+d.expiry;ok.classList.add('show');e.target.reset();loadLic();}
+  }catch{err.textContent='Network error.';err.classList.add('show');}
+  btn.disabled=false;btn.textContent=t('activate');
+});
+
+// ── Tokens ────────────────────────────────────────────────
+async function loadTokens(){
+  try{const r=await af('/api/tokens/balance');const d=await r.json();document.getElementById('tok-bal').textContent=d.balance;}catch{}
+  const el=document.getElementById('tok-hist');
+  try{const r=await af('/api/tokens/history');const txs=await r.json();
+    if(!txs.length){el.innerHTML='<div class="empty"><h3>No transactions</h3></div>';return;}
+    el.innerHTML='<table><thead><tr><th>Change</th><th>Reason</th><th>Balance after</th><th>Date</th></tr></thead><tbody>'+
+      txs.map(t=>`<tr><td style="font-weight:700;color:${t.delta>0?'var(--ok)':'var(--err)'}">${t.delta>0?'+':''}${t.delta}</td><td>${t.reason}</td><td style="font-weight:600">${t.balance_after}</td><td class="time-ago">${timeAgo(t.created_at)}</td></tr>`).join('')+'</tbody></table>';
+  }catch{}
+  const pkg=document.getElementById('pkg-list');
+  try{const r=await fetch('/api/tokens/packages');const pkgs=await r.json();
+    if(!pkgs.length){pkg.innerHTML='<p style="color:var(--txt3);font-size:.875rem">No packages available yet.</p>';return;}
+    pkg.innerHTML='<div class="pkg-grid">'+pkgs.map(p=>`<div class="pkg-card"><div class="pkg-name">${p.name}</div><div class="pkg-desc">${p.description}</div><div class="pkg-tokens">${p.tokens.toLocaleString()} <span>tokens</span></div><div class="pkg-price">${formatMoney(p.price,p.currency)}</div></div>`).join('')+'</div>';
+  }catch{}
+}
+
+// ── SMTP ──────────────────────────────────────────────────
+document.getElementById('smtp-form').addEventListener('submit',async(e)=>{
+  e.preventDefault();const btn=document.getElementById('sm-btn');const err=document.getElementById('sm-err');const ok=document.getElementById('sm-ok');
+  err.classList.remove('show');ok.classList.remove('show');btn.disabled=true;btn.textContent='…';
+  const fd=new FormData(e.target);
+  try{const r=await af('/api/smtp?email='+encodeURIComponent(fd.get('email'))+'&password='+encodeURIComponent(fd.get('password')),{method:'POST'});
+    const d=await r.json();
+    if(!r.ok){err.textContent=d.detail||'Error.';err.classList.add('show');}
+    else{ok.textContent='SMTP saved!';ok.classList.add('show');}
+  }catch{err.textContent='Network error.';err.classList.add('show');}
+  btn.disabled=false;btn.textContent=t('save');
+});
+
+// ── Webhook ───────────────────────────────────────────────
+async function loadWebhook(){
+  try{const r=await af('/api/webhook');const d=await r.json();
+    if(d.configured){document.getElementById('wh-url').value=d.url||'';document.getElementById('wh-secret-box').style.display='block';document.getElementById('wh-secret-val').textContent=d.secret||'—';}
+  }catch{}
+}
+document.getElementById('wh-form').addEventListener('submit',async(e)=>{
+  e.preventDefault();const btn=document.getElementById('wh-btn');const err=document.getElementById('wh-err');const ok=document.getElementById('wh-ok');
+  err.classList.remove('show');ok.classList.remove('show');btn.disabled=true;btn.textContent='…';
+  const fd=new FormData(e.target);
+  try{const r=await af('/api/webhook?url='+encodeURIComponent(fd.get('url')),{method:'POST'});const d=await r.json();
+    if(!r.ok){err.textContent=d.detail||'Error.';err.classList.add('show');}
+    else{ok.textContent='Saved!';ok.classList.add('show');document.getElementById('wh-secret-box').style.display='block';document.getElementById('wh-secret-val').textContent=d.secret||'—';}
+  }catch{err.textContent='Network error.';err.classList.add('show');}
+  btn.disabled=false;btn.textContent=t('save');
+});
+async function testWebhook(){const r=await af('/api/webhook/test',{method:'POST'});const d=await r.json();const ok=document.getElementById('wh-ok');ok.textContent=r.ok?'Test ping sent!':d.detail||'Error';ok.classList.add('show');}
+async function deleteWebhook(){if(!confirm('Remove webhook?'))return;await af('/api/webhook',{method:'DELETE'});document.getElementById('wh-url').value='';document.getElementById('wh-secret-box').style.display='none';const ok=document.getElementById('wh-ok');ok.textContent='Removed';ok.classList.add('show');}
+function copySecret(){navigator.clipboard.writeText(document.getElementById('wh-secret-val').textContent).then(()=>{const ok=document.getElementById('wh-ok');ok.textContent='Copied!';ok.classList.add('show');setTimeout(()=>ok.classList.remove('show'),2000);});}
+
+// ── Settings ──────────────────────────────────────────────
+async function loadSettings(){
+  try{const r=await af('/api/settings');const d=await r.json();
+    const ls=document.getElementById('lang-select');if(ls)ls.value=d.language||'en';
+    buildCurrencySelect('def-currency',d.default_currency||'USD');
+    const mr=document.querySelector('#settings-form [name="max_reminders"]');if(mr)mr.value=d.max_reminders||5;
+  }catch{}
+}
+document.getElementById('settings-form').addEventListener('submit',async(e)=>{
+  e.preventDefault();const err=document.getElementById('st-err');const ok=document.getElementById('st-ok');
+  err.classList.remove('show');ok.classList.remove('show');
+  const fd=new FormData(e.target);
+  // Apply language immediately
+  const newLang=fd.get('language');
+  if(newLang&&newLang!==lang){lang=newLang;localStorage.setItem('lh_lang',lang);applyLang();}
+  try{const r=await af('/api/settings',{method:'POST',body:fd});const d=await r.json();
+    if(!r.ok){err.textContent=d.detail||'Error.';err.classList.add('show');}
+    else{ok.textContent=t('save_settings')+' ✓';ok.classList.add('show');}
+  }catch{err.textContent='Network error.';err.classList.add('show');}
+});
+async function changePassword(){
+  const old=document.getElementById('old-pw').value;const nw=document.getElementById('new-pw').value;
+  const err=document.getElementById('pw-err');const ok=document.getElementById('pw-ok');
+  err.classList.remove('show');ok.classList.remove('show');
+  const fd=new FormData();fd.append('old_password',old);fd.append('new_password',nw);
+  try{const r=await af('/api/change-password',{method:'POST',body:fd});const d=await r.json();
+    if(!r.ok){err.textContent=d.detail||'Error.';err.classList.add('show');}
+    else{ok.textContent='Password updated! Signing out…';ok.classList.add('show');setTimeout(logout,2000);}
+  }catch{err.textContent='Network error.';err.classList.add('show');}
+}
+
+// ── Init ──────────────────────────────────────────────────
+lang=localStorage.getItem('lh_lang')||'en';
+applyLang();
+buildCurrencySelect('inv-currency');
+buildCurrencySelect('def-currency');
+loadOv();
+</script>
+</body>
+</html>
